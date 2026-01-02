@@ -1,0 +1,67 @@
+/* src/components/ui/MagneticCursor.css */
+.magnetic-cursor {
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  border: 2px solid black;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate3d(0, 0, 0) translate(-50%, -50%);
+  transition: 
+    transform 0.15s cubic-bezier(0.18, 0.89, 0.32, 1.28),
+    width 0.2s ease,
+    height 0.2s ease,
+    border-color 0.2s ease;
+  /* Hardware acceleration */
+  will-change: transform;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+.magnetic-cursor.hidden {
+  opacity: 0;
+  transform: translate3d(0, 0, 0) translate(-50%, -50%) scale(0.5);
+}
+
+.magnetic-cursor.click {
+  transform: translate3d(0, 0, 0) translate(-50%, -50%) scale(0.7);
+  border-color: #000;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.magnetic-cursor.magnetic {
+  width: 40px;
+  height: 40px;
+  border-color: #666;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Hide cursor on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .magnetic-cursor {
+    display: none;
+  }
+}
+
+/* Performance optimizations for low-end devices */
+@media (prefers-reduced-motion: reduce) {
+  .magnetic-cursor {
+    transition: none;
+  }
+}
+
+/* Ensure cursor is above everything */
+.magnetic-cursor {
+  z-index: 2147483647; /* Maximum z-index */
+}
+
+.magnetic-cursor {
+  opacity: 1 !important; /* Force visible */
+  visibility: visible !important;
+}
+
+.magnetic-cursor.hidden {
+  opacity: 0;
+  visibility: hidden;
+}

@@ -1,0 +1,329 @@
+/* src/styles/globals.css */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+/* Tailwind directives - MUST be first */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  cursor: none;
+}
+
+/* Desert background class */
+.bg-desert {
+  background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), 
+              url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Animation classes */
+.fade-in {
+  animation: fadeIn 0.8s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === ADD ONLY THESE 3 LINES FOR DEBT MANAGEMENT === */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+/* Optional: Add smooth transitions for modals */
+.modal-content {
+  transition: all 0.3s ease-out;
+}
+
+/* Dark mode variables */
+[data-theme="dark"] {
+  --bg-primary: #1a202c;
+  --bg-secondary: #2d3748;
+  --text-primary: #f7fafc;
+  --text-secondary: #e2e8f0;
+  --border-color: #4a5568;
+}
+
+/* Enhanced Dark Mode Variables */
+[data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --bg-card: #1e293b;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --border-color: #475569;
+  --accent-color: #3b82f6;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --error-color: #ef4444;
+}
+
+/* Apply dark mode to entire app */
+.dark {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Fix white blocks in all components */
+.dark .bg-white {
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Fix colored backgrounds in dark mode */
+.dark .bg-green-50,
+.dark .bg-blue-50,
+.dark .bg-yellow-50,
+.dark .bg-red-50,
+.dark .bg-purple-50,
+.dark .bg-orange-50,
+.dark .bg-indigo-50,
+.dark .bg-pink-50,
+.dark .bg-teal-50 {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Fix button styles in dark mode */
+.dark button.bg-white {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.dark button.bg-gray-300 {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark button.bg-black {
+  background-color: var(--accent-color) !important;
+  color: white !important;
+}
+
+.dark button.bg-green-600 {
+  background-color: var(--success-color) !important;
+}
+
+/* Fix form elements */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.dark input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* Fix charts and analytics components */
+.dark .recharts-wrapper {
+  background-color: var(--bg-card) !important;
+}
+
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+  stroke: var(--border-color) !important;
+}
+
+.dark .recharts-text {
+  fill: var(--text-primary) !important;
+}
+
+/* Fix directional list hover */
+.dark .hover\:bg-gray-100:hover {
+  background-color: var(--bg-tertiary) !important;
+}
+
+.dark .direction-list-item:hover {
+  background-color: var(--bg-tertiary) !important;
+}
+
+/* Fix debt card spacing */
+.debt-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.debt-stat-item {
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.debt-stat-value {
+  font-size: 1.125rem;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.debt-stat-label {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  display: block;
+}
+
+
+
+/* Fix income vs expenses chart overflow */
+.chart-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.chart-label {
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Fix settings toggle styles */
+.dark .bg-gray-200 {
+  background-color: var(--bg-tertiary) !important;
+}
+
+.dark .ring-black {
+  --tw-ring-color: var(--accent-color) !important;
+}
+
+/* Fix security analytics white blocks */
+.dark .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+.dark .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+.dark .bg-green-50 {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+.dark .bg-yellow-50 {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+}
+
+/* Fix email alerts and auto-refresh buttons */
+.dark .border-gray-300 {
+  border-color: var(--border-color) !important;
+}
+
+.dark .bg-green-100 {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+}
+
+.dark .bg-blue-100 {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Fix highest interest debt block */
+.dark .bg-yellow-50 {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+}
+
+.dark .border-yellow-200 {
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+.dark .text-yellow-900 {
+  color: #f59e0b !important;
+}
+
+.dark .text-yellow-700 {
+  color: #f59e0b !important;
+}
+
+.dark .text-yellow-600 {
+  color: #f59e0b !important;
+}
+
+/* Fix goals and budgets form buttons */
+.dark .bg-gray-300 {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Ensure text remains visible in all components */
+.dark .text-gray-900 {
+  color: var(--text-primary) !important;
+}
+
+.dark .text-gray-800 {
+  color: var(--text-primary) !important;
+}
+
+.dark .text-gray-700 {
+  color: var(--text-secondary) !important;
+}
+
+.dark .text-gray-600 {
+  color: var(--text-secondary) !important;
+}
+
+.dark .text-gray-500 {
+  color: var(--text-muted) !important;
+}
+
+.dark .text-gray-400 {
+  color: var(--text-muted) !important;
+}
