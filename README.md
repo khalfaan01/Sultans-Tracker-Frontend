@@ -89,8 +89,7 @@ This frontend is built to integrate seamlessly with a security‑focused fintech
 
 ### User Experience
 
-* Responsive, mobile‑first design
-* Dark / Light mode
+* Responsive, webpage‑first design
 * Smooth animations & micro‑interactions
 * Real‑time notifications
 
