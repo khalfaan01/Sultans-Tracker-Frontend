@@ -298,11 +298,11 @@ export default function RecurringTransactions() {
 function RecurringTransactionForm({ transaction, onClose, onSave }) {
   const [formData, setFormData] = useState({
     description: transaction?.description || '',
-    amount: transaction?.amount || '',
+    amount: transaction?.amount?.toString() || '',
     type: transaction?.type || 'expense',
     category: transaction?.category || 'Utilities',
     frequency: transaction?.frequency || 'monthly',
-    accountId: transaction?.accountId || '',
+    accountId: transaction?.accountId?.toString() || '',
     isActive: transaction?.isActive ?? true,
     autoApprove: transaction?.autoApprove || false
   });
@@ -336,6 +336,20 @@ function RecurringTransactionForm({ transaction, onClose, onSave }) {
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate amount is a valid number
+  const amount = parseFloat(formData.amount);
+  if (isNaN(amount) || amount <= 0) {
+    alert('Please enter a valid positive amount');
+    return;
+  }
+  
+  // Prepare data with proper number conversion
+  const submissionData = {
+    ...formData,
+    amount: amount,
+    accountId: parseInt(formData.accountId) || null
+  };
     
     // Basic form validation
     if (!formData.description || !formData.amount || !formData.accountId) {
@@ -406,7 +420,10 @@ function RecurringTransactionForm({ transaction, onClose, onSave }) {
               type="number"
               placeholder="0.00"
               value={formData.amount}
-              onChange={(e) => setFormData({...formData, amount: parseFloat(e.target.value)})}
+              onChange={(e) => {
+              const value = e.target.value;
+              setFormData({...formData, amount: value === '' ? '' : parseFloat(value)})
+              }}
               className="w-full p-2 border rounded focus:ring-2 focus:ring-black focus:border-transparent"
               step="0.01"
               min="0.01"

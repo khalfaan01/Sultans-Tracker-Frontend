@@ -125,6 +125,22 @@ api.interceptors.response.use(
   }
 );
 
+const MAX_RETRIES = 2;
+const RETRY_DELAY = 1000; // 1 second
+
+const retryRequest = async (requestFn, retries = 0) => {
+  try {
+    return await requestFn();
+  } catch (error) {
+    if (error.response?.status === 429 && retries < MAX_RETRIES) {
+      console.warn(`Rate limited, retrying in ${RETRY_DELAY}ms...`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      return retryRequest(requestFn, retries + 1);
+    }
+    throw error;
+  }
+};
+
 /**
  * Authentication API methods
  * @namespace
@@ -352,6 +368,69 @@ export const budgetsAPI = {
       throw error;
     }
   },
+
+  /**
+   * Retrieves budget summary
+   * @returns {Promise<Object>} Budget summary data
+   */
+  getSummary: async () => {
+    try {
+      const response = await api.get('/budgets/summary');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch budget summary', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Checks if transaction would exceed budget limit
+   * @param {string} category - Transaction category
+   * @param {number} amount - Transaction amount
+   * @returns {Promise<Object>} Budget limit check result
+   */
+  checkLimit: async (category, amount) => {
+  try {
+    // Wrap the API call with retry logic
+    const response = await retryRequest(() => 
+      api.post('/budgets/check-limit', { category, amount })
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Failed to check budget limit', error);
+    // Return a safe default instead of throwing
+    return { allowed: true, budget: null, warning: 'Budget check temporarily unavailable' };
+  }
+},
+
+  /**
+   * Gets smart budget recommendations
+   * @returns {Promise<Object>} Budget recommendations
+   */
+  getRecommendations: async () => {
+    try {
+      const response = await api.get('/budgets/recommendations');
+      return response.data;
+    } catch (error) {
+      // Fallback if endpoint doesn't exist yet
+      console.warn('Budget recommendations endpoint not available', error);
+      return { recommendations: [] };
+    }
+  },
+
+  /**
+   * Resets monthly spent amounts (admin/background)
+   * @returns {Promise<Object>} Reset result
+   */
+  resetMonthly: async () => {
+    try {
+      const response = await api.post('/budgets/reset-spent');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to reset monthly budgets', error);
+      throw error;
+    }
+  }
 };
 
 /**

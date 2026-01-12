@@ -29,7 +29,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [authenticated, setAuthenticated] = useState(false);
+  const [isAuthenticated,setIsAuthenticated] = useState(false);
 
   /**
    * Checks if session has timed out based on login time and last activity
@@ -107,7 +107,7 @@ export const AuthProvider = ({ children }) => {
    * @param {string} reason - Reason for logout (for logging purposes)
    */
   const logout = (reason = 'User initiated') => {
-    console.log(`🔐 Auth - Logging out: ${reason}`);
+    console.log(` Auth - Logging out: ${reason}`);
     
     // Clear all auth-related storage
     localStorage.removeItem('token');
@@ -121,7 +121,8 @@ export const AuthProvider = ({ children }) => {
     
     // Reset state
     setUser(null);
-    setAuthenticated(false);
+    setIsAuthenticated(false);
+    setLoading(false); 
     
     // Use a small delay to ensure state updates
     setTimeout(() => {
@@ -140,13 +141,15 @@ export const AuthProvider = ({ children }) => {
       
       // Restore user session from localStorage
       setUser(JSON.parse(userData));
-      setAuthenticated(true);
+      setIsAuthenticated(true);
       updateLastActivity();
       
       // Set up all session management handlers
       const cleanupBeforeUnload = setupBeforeUnload();
       const cleanupActivityTracking = setupActivityTracking();
       const cleanupSessionChecker = setupSessionChecker();
+
+      setLoading(false);
       
       // Cleanup all event listeners on unmount
       return () => {
@@ -156,6 +159,7 @@ export const AuthProvider = ({ children }) => {
       };
     } else {
       setLoading(false);
+      setIsAuthenticated(false)
     }
   }, []);
 
@@ -189,10 +193,14 @@ export const AuthProvider = ({ children }) => {
       setupSessionChecker();
       
       setUser(userData);
-      setAuthenticated(true);
+      setIsAuthenticated(true); 
+      setLoading(false); 
       
       return { success: true, data: responseData };
     } catch (error) {
+      setLoading(false); 
+      setIsAuthenticated(false); 
+
       return { 
         success: false, 
         error: error.response?.data?.message || error.message || 'Login failed' 
@@ -236,7 +244,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     loading,
-    isAuthenticated: authenticated,
+    isAuthenticated,
     updateLastActivity,
   };
 
