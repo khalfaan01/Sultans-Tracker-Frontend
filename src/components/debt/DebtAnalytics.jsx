@@ -35,7 +35,7 @@ const DebtAnalytics = () => {
       auto: 'Auto Loan',
       student: 'Student Loan'
     };
-    return labels[type] || type.charAt(0).toUpperCase() + type.slice(1); // Capitalize unknown types
+    return labels[type] || type.charAt(0).toUpperCase() + type.slice(1);
   };
 
   // Calculate safe percentage for progress bars
@@ -45,7 +45,7 @@ const DebtAnalytics = () => {
       const numTotal = Number(total) || 0;
       
       if (numTotal <= 0 || numAmount <= 0) return 0;
-      if (numAmount > numTotal) return 100; // Cap at 100%
+      if (numAmount > numTotal) return 100;
       
       return (numAmount / numTotal) * 100;
     } catch (err) {
@@ -62,7 +62,6 @@ const DebtAnalytics = () => {
       
       if (numericBalance <= 0 || numericRate <= 0) return 0;
       
-      // Monthly interest = balance * (annual rate / 100 / 12)
       return numericBalance * (numericRate / 100 / 12);
     } catch (err) {
       console.error('Error calculating monthly interest:', err);
@@ -70,9 +69,58 @@ const DebtAnalytics = () => {
     }
   };
 
-  // Memoize safe analytics data to prevent unnecessary recalculations
+  // Generate analytics from debts if API fails
+  const generateAnalyticsFromDebts = (debtsList) => {
+    if (!debtsList || debtsList.length === 0) {
+      return {
+        totalDebt: 0,
+        totalMinimumPayments: 0,
+        totalMonthlyInterest: 0,
+        debtCount: 0,
+        debtByType: {},
+        snowballOrder: [],
+        avalancheOrder: [],
+        highestInterestDebt: null
+      };
+    }
+
+    const totalDebt = debtsList.reduce((sum, debt) => sum + (debt.balance || 0), 0);
+    const totalMinimumPayments = debtsList.reduce((sum, debt) => sum + (debt.minimumPayment || 0), 0);
+    const totalMonthlyInterest = debtsList.reduce((sum, debt) => {
+      return sum + ((debt.balance || 0) * ((debt.interestRate || 0) / 100 / 12));
+    }, 0);
+
+    const debtByType = {};
+    debtsList.forEach(debt => {
+      const type = debt.type || 'unknown';
+      debtByType[type] = (debtByType[type] || 0) + (debt.balance || 0);
+    });
+
+    const snowballOrder = [...debtsList].sort((a, b) => (a.balance || 0) - (b.balance || 0));
+    const avalancheOrder = [...debtsList].sort((a, b) => (b.interestRate || 0) - (a.interestRate || 0));
+
+    const highestInterestDebt = debtsList.reduce((highest, debt) => {
+      return (debt.interestRate || 0) > (highest.interestRate || 0) ? debt : highest;
+    }, debtsList[0]);
+
+    return {
+      totalDebt,
+      totalMinimumPayments,
+      totalMonthlyInterest,
+      debtCount: debtsList.length,
+      debtByType,
+      snowballOrder,
+      avalancheOrder,
+      highestInterestDebt
+    };
+  };
+
+  // Use analytics from API or generate from debts
+  const displayAnalytics = analytics || generateAnalyticsFromDebts(debts || []);
+
+  // Memoize safe analytics data
   const safeAnalytics = useMemo(() => {
-    if (!analytics || typeof analytics !== 'object') {
+    if (!displayAnalytics || typeof displayAnalytics !== 'object') {
       return {
         totalDebt: 0,
         totalMinimumPayments: 0,
@@ -86,16 +134,16 @@ const DebtAnalytics = () => {
     }
 
     return {
-      totalDebt: Math.max(0, Number(analytics.totalDebt) || 0),
-      totalMinimumPayments: Math.max(0, Number(analytics.totalMinimumPayments) || 0),
-      totalMonthlyInterest: Math.max(0, Number(analytics.totalMonthlyInterest) || 0),
-      debtCount: Math.max(0, Number(analytics.debtCount) || 0),
-      debtByType: analytics.debtByType || {},
-      snowballOrder: Array.isArray(analytics.snowballOrder) ? analytics.snowballOrder : [],
-      avalancheOrder: Array.isArray(analytics.avalancheOrder) ? analytics.avalancheOrder : [],
-      highestInterestDebt: analytics.highestInterestDebt || null
+      totalDebt: Math.max(0, Number(displayAnalytics.totalDebt) || 0),
+      totalMinimumPayments: Math.max(0, Number(displayAnalytics.totalMinimumPayments) || 0),
+      totalMonthlyInterest: Math.max(0, Number(displayAnalytics.totalMonthlyInterest) || 0),
+      debtCount: Math.max(0, Number(displayAnalytics.debtCount) || 0),
+      debtByType: displayAnalytics.debtByType || {},
+      snowballOrder: Array.isArray(displayAnalytics.snowballOrder) ? displayAnalytics.snowballOrder : [],
+      avalancheOrder: Array.isArray(displayAnalytics.avalancheOrder) ? displayAnalytics.avalancheOrder : [],
+      highestInterestDebt: displayAnalytics.highestInterestDebt || null
     };
-  }, [analytics]);
+  }, [displayAnalytics]);
 
   // Handle loading state
   if (loading) {
@@ -124,7 +172,7 @@ const DebtAnalytics = () => {
   }
 
   // Handle empty state
-  if (!analytics || safeAnalytics.debtCount === 0) {
+  if (safeAnalytics.debtCount === 0 && (!debts || debts.length === 0)) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
         <div className="text-gray-400 mb-4">
@@ -140,7 +188,6 @@ const DebtAnalytics = () => {
 
   return (
     <div className="space-y-6">
-      {/* Error banner for data inconsistencies */}
       {safeAnalytics.totalDebt <= 0 && safeAnalytics.debtCount > 0 && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <div className="flex items-center">
@@ -152,7 +199,6 @@ const DebtAnalytics = () => {
         </div>
       )}
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
           <div className="text-2xl font-bold text-gray-900 mb-2">
@@ -179,7 +225,6 @@ const DebtAnalytics = () => {
         </div>
       </div>
 
-      {/* Debt by Type */}
       {Object.keys(safeAnalytics.debtByType).length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h3 className="text-xl font-semibold text-gray-900 mb-4">Debt by Type</h3>
@@ -212,10 +257,8 @@ const DebtAnalytics = () => {
         </div>
       )}
 
-      {/* Payoff Strategies */}
       {(safeAnalytics.snowballOrder.length > 0 || safeAnalytics.avalancheOrder.length > 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Debt Snowball - Smallest balances first */}
           {safeAnalytics.snowballOrder.length > 0 && (
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Debt Snowball</h3>
@@ -238,7 +281,6 @@ const DebtAnalytics = () => {
             </div>
           )}
 
-          {/* Debt Avalanche - Highest interest first */}
           {safeAnalytics.avalancheOrder.length > 0 && (
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Debt Avalanche</h3>
@@ -263,7 +305,6 @@ const DebtAnalytics = () => {
         </div>
       )}
 
-      {/* Highest Interest Debt */}
       {safeAnalytics.highestInterestDebt && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h3 className="text-xl font-semibold text-gray-900 mb-4">Highest Interest Debt</h3>

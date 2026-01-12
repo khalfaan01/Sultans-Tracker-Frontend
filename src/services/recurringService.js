@@ -35,13 +35,20 @@ class RecurringService {
    * @throws {Error} If API request fails
    */
   async createRecurringTransaction(data) {
+    let backendData;
     try {
+
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+
       // Calculate dates
       const startDate = new Date();
+      startDate.setDate(startDate.getDate() + 1); // Start tomorrow
+
       const nextRunDate = this.calculateNextRunDate(data.frequency);
 
       const backendData = {
-        userId: parseInt(localStorage.getItem('userId')),
+        
         accountId: parseInt(data.accountId) || 1,
         amount: parseFloat(data.amount),
         type: data.type,
@@ -69,7 +76,7 @@ class RecurringService {
     }
     
     // For debugging
-    console.error('Request data that failed:', backendData);
+    console.error('Request data that failed:', backendData || data);
     
     if (error.response?.status === 404) {
       return {

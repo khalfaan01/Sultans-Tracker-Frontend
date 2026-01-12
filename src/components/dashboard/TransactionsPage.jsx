@@ -4,7 +4,8 @@ import {
   Plus, Search, Trash2, AlertTriangle, Calendar, BarChart3  
 } from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
-import { useTransactions } from '../../contexts';
+import { useTransactions, useBudgets } from '../../contexts';
+import { checkTransactionAgainstBudget, showBudgetWarning, showBudgetError } from '../../utils/budgetCheck';
 
 // Components
 import TransactionMoodTracker from './TransactionMoodTracker';
@@ -36,6 +37,8 @@ export default function TransactionsPage({ filters = {} }) {
     },
     clearError 
   } = useTransactions();
+
+  const { checkBudgetLimit } = useBudgets();
   
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTransaction, setNewTransaction] = useState(defaultTransaction);
@@ -48,6 +51,8 @@ export default function TransactionsPage({ filters = {} }) {
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [submissionError, setSubmissionError] = useState(null);
+  const [budgetCheckResult, setBudgetCheckResult] = useState(null);
+  const [budgetCheckTimer, setBudgetCheckTimer] = useState(null);
 
   // Create safe filters with default values
   const safeFilters = useCallback(() => {
@@ -69,7 +74,61 @@ export default function TransactionsPage({ filters = {} }) {
     }
   }, [filters]);
 
-  // Handle adding new transaction with validation
+  // Check budget when transaction data changes
+  useEffect(() => {
+  if (!showAddForm) return;
+  
+  // Clear existing timer
+  if (budgetCheckTimer) {
+    clearTimeout(budgetCheckTimer);
+  }
+  
+  // Only check budget for expense transactions
+  if (newTransaction.type !== 'expense' || 
+      !newTransaction.category || 
+      !newTransaction.amount || 
+      parseFloat(newTransaction.amount) <= 0) {
+    setBudgetCheckResult(null);
+    return;
+  }
+  
+  // Set new timer for debounced check (500ms delay)
+  const timer = setTimeout(async () => {
+    try {
+      const result = await checkTransactionAgainstBudget(
+        newTransaction, 
+        checkBudgetLimit
+      );
+      
+      // Ensure result has the expected structure
+      const normalizedResult = {
+        allowed: result.allowed !== false,
+        warning: result.warning,
+        details: result.details || {}
+      };
+      
+      setBudgetCheckResult(normalizedResult);
+    } catch (err) {
+      console.warn('Budget check failed:', err);
+      // Set safe default
+      setBudgetCheckResult({ 
+        allowed: true, 
+        warning: 'Budget check unavailable, proceeding with transaction' 
+      });
+    }
+  }, 500);
+  
+  setBudgetCheckTimer(timer);
+  
+  // Cleanup on unmount
+  return () => {
+    if (budgetCheckTimer) {
+      clearTimeout(budgetCheckTimer);
+    }
+  };
+}, [newTransaction, showAddForm, checkBudgetLimit]);
+
+  // Handle adding new transaction with validation and budget check
   const handleAddTransaction = useCallback(async (e) => {
     e.preventDefault();
     setSubmissionError(null);
@@ -94,12 +153,45 @@ export default function TransactionsPage({ filters = {} }) {
       return;
     }
 
+    // Check budget before proceeding
+    if (newTransaction.type === 'expense') {
+      const budgetCheck = await checkTransactionAgainstBudget(
+        newTransaction, 
+        checkBudgetLimit
+      );
+      
+      // Check if budget is exceeded and not allowed
+      const budgetError = showBudgetError(budgetCheck);
+      if (budgetError?.blocked) {
+        setSubmissionError(budgetError.message);
+        return;
+      }
+      
+      // If budget has warning but allows exceed, show warning
+      if (budgetCheck.warning) {
+        const proceed = await new Promise((resolve) => {
+          showBudgetWarning(
+            budgetCheck,
+            () => resolve(true),
+            () => resolve(false)
+          );
+        });
+        
+        if (!proceed) {
+          // User cancelled due to budget warning
+          console.log('Transaction cancelled due to budget warning');
+          return;
+        }
+      }
+    }
+
     try {
       const result = await createTransaction(newTransaction);
       
       if (result?.success) {
         setShowAddForm(false);
         setNewTransaction(defaultTransaction);
+        setBudgetCheckResult(null);
         
         if (result.warning) {
           // Show fraud warning as non-blocking alert
@@ -107,7 +199,7 @@ export default function TransactionsPage({ filters = {} }) {
           alert(`⚠️ Fraud Detection Alert: ${result.warning}`);
         }
       } else {
-        // Handle budget exceeded errors with detailed messages
+        // Handle backend budget exceeded errors (fallback)
         if (result?.error?.includes('exceed budget')) {
           const budgetError = `\n\nBUDGET LIMIT EXCEEDED\n\nCategory: ${result.budgetCategory}\nCurrent Spent: $${result.currentSpent?.toFixed(2) || '0.00'}\nBudget Limit: $${result.budgetLimit?.toFixed(2) || '0.00'}\nThis Transaction: $${result.transactionAmount?.toFixed(2) || '0.00'}\nWould Be Total: $${result.wouldBeTotal?.toFixed(2) || '0.00'}\n\n${result.suggestion ? `Suggestion: ${result.suggestion}` : 'Please reduce the amount or choose a different category.'}`;
           setSubmissionError(budgetError);
@@ -119,7 +211,7 @@ export default function TransactionsPage({ filters = {} }) {
       console.error('Error adding transaction:', err);
       setSubmissionError('An unexpected error occurred while adding the transaction');
     }
-  }, [newTransaction, createTransaction, defaultTransaction]);
+  }, [newTransaction, createTransaction, defaultTransaction, checkBudgetLimit]);
 
   // Handle transaction deletion with confirmation
   const handleDelete = useCallback(async (id) => {
@@ -308,23 +400,50 @@ export default function TransactionsPage({ filters = {} }) {
       />
       {/* Add Transaction Form */}
       {showAddForm && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="bg-white p-6 rounded-lg shadow-sm border"
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="bg-white p-6 rounded-lg shadow-sm border"
+    >
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold">Add New Transaction</h3>
+        <button
+          onClick={resetForm}
+          className="text-gray-500 hover:text-gray-700"
+          aria-label="Close form"
         >
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Add New Transaction</h3>
-            <button
-              onClick={resetForm}
-              className="text-gray-500 hover:text-gray-700"
-              aria-label="Close form"
-            >
-              ×
-            </button>
-          </div>
-          <form onSubmit={handleAddTransaction} className="space-y-4">
+          ×
+        </button>
+      </div>
+      
+      {/* Show budget warning if applicable */}
+      {budgetCheckResult?.warning && (
+  <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-lg">
+    <div className="flex items-start">
+      <AlertTriangle size={20} className="mr-2 flex-shrink-0" />
+      <div>
+        <p className="font-medium">⚠️ Budget Warning</p>
+        <p className="text-sm">{budgetCheckResult.warning}</p>
+        {budgetCheckResult.details?.overspendAmount > 0 && (
+          <p className="text-sm mt-1">
+            Overspend: <span className="font-semibold">${budgetCheckResult.details.overspendAmount.toFixed(2)}</span>
+          </p>
+        )}
+        {budgetCheckResult.details?.currentSpent > 0 && (
+          <p className="text-sm mt-1">
+            Current spent: <span className="font-semibold">${budgetCheckResult.details.currentSpent.toFixed(2)}</span>
+          </p>
+        )}
+        <p className="text-xs mt-1 italic">
+          Transaction will be processed (budget allows exceeding)
+        </p>
+      </div>
+    </div>
+  </div>
+)}
+      
+      <form onSubmit={handleAddTransaction} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Type *</label>
@@ -400,25 +519,44 @@ export default function TransactionsPage({ filters = {} }) {
               />
             </div>
 
-            <div className="flex space-x-3">
-              <button
-                type="submit"
-                className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-50"
-                disabled={loading}
-              >
-                Add Transaction
-              </button>
-              <button
-                type="button"
-                onClick={resetForm}
-                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </motion.div>
-      )}
+            {/* budget status indicator */}
+            {newTransaction.type === 'expense' && budgetCheckResult && (
+  <div className={`text-sm p-2 rounded ${
+    !budgetCheckResult.allowed 
+      ? 'bg-red-50 text-red-700' 
+      : budgetCheckResult.warning 
+        ? 'bg-yellow-50 text-yellow-700' 
+        : 'bg-green-50 text-green-700'
+  }`}>
+    {!budgetCheckResult.allowed ? (
+      <span>⛔ Blocked: This transaction exceeds your budget limit</span>
+    ) : budgetCheckResult.warning ? (
+      <span>⚠️ Warning: Will exceed budget but allowed</span>
+    ) : (
+      <span>✅ Within budget limits</span>
+    )}
+  </div>
+)}
+
+        <div className="flex space-x-3">
+          <button
+            type="submit"
+            className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-50"
+            disabled={loading || (newTransaction.type === 'expense' && budgetCheckResult && !budgetCheckResult.allowed)}
+          >
+            Add Transaction
+          </button>
+          <button
+            type="button"
+            onClick={resetForm}
+            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </motion.div>
+  )}
 
       {/* Conditional Rendering based on Active View */}
       {activeView === 'calendar' ? (

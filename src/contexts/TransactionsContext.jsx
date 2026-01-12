@@ -73,13 +73,14 @@ export const TransactionsProvider = ({ children }) => {
     
     // Send transaction for real-time security monitoring via WebSocket
     if (isConnected && socket) {
-      socket.emit('monitor_transaction', {
-        ...transactionData,
-        timestamp: new Date()
-      });
-    }
-    
-    const result = await executeAsync(async () => {
+    socket.emit('monitor_transaction', {
+      ...transactionData,
+      timestamp: new Date()
+    });
+  }
+  
+  const result = await executeAsync(async () => {
+    try {
       const response = await transactionsAPI.create(transactionData);
       
       // Refresh the entire transactions list to maintain data consistency
@@ -90,10 +91,37 @@ export const TransactionsProvider = ({ children }) => {
         data: response,
         warning: response.warning
       };
-    });
-    
-    return result;
-  };
+    } catch (error) {
+      // Handle budget errors from backend
+      if (error.response?.status === 400 || error.response?.status === 403) {
+        const errorData = error.response?.data;
+        
+        // Check if it's a budget limit exceeded error
+        if (errorData?.error?.includes('exceed') || 
+            errorData?.error?.includes('budget') ||
+            errorData?.details?.budgetCategory) {
+          
+          return {
+            success: false,
+            error: errorData.error || 'Budget limit exceeded',
+            budgetCategory: errorData.details?.budgetCategory,
+            budgetLimit: errorData.details?.budgetLimit,
+            currentSpent: errorData.details?.currentSpent,
+            transactionAmount: errorData.details?.transactionAmount,
+            wouldBeTotal: errorData.details?.wouldBeTotal,
+            overspendAmount: errorData.details?.overspendAmount,
+            suggestion: errorData.details?.suggestion
+          };
+        }
+      }
+      
+      // Re-throw other errors for the executeAsync to handle
+      throw error;
+    }
+  });
+  
+  return result;
+};
 
   /**
    * Updates an existing transaction

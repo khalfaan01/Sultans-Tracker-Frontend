@@ -24,6 +24,9 @@ export const useAuthCheck = () => {
    * @throws {Error} When user is not authenticated
    */
   const requireAuth = () => {
+    if (authLoading) {
+      throw new Error('Authentication is still loading');
+    }
     if (!isAuthenticated) {
       throw new Error('User must be authenticated to perform this action');
     }
@@ -34,8 +37,12 @@ export const useAuthCheck = () => {
    * @returns {boolean} True if authenticated, false otherwise
    */
   const requireAuthSilent = () => {
+    if (authLoading) {
+      console.log('AuthCheck - Authentication is still loading');
+      return false;
+    }
     if (!isAuthenticated) {
-      console.log('AuthCheck - Skipping operation: user not authenticated');
+      console.log('AuthCheck - User not authenticated');
       return false;
     }
     return true;
