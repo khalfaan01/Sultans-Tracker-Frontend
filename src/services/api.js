@@ -430,6 +430,20 @@ export const budgetsAPI = {
       console.error('Failed to reset monthly budgets', error);
       throw error;
     }
+  },
+
+    /**
+   * Synchronizes budget spent amounts with actual transactions
+   * @returns {Promise<Object>} Sync results
+   */
+  sync: async () => {
+    try {
+      const response = await api.post('/budgets/sync');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to sync budgets', error);
+      throw error;
+    }
   }
 };
 

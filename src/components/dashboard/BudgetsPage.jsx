@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Plus, TrendingUp, AlertTriangle, Trash2, Calculator, Settings, Lightbulb, RefreshCw } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useBudgets, useTransactions } from '../../contexts';
-
+import { budgetsAPI } from '../../services/api';
 /**
  * Smart budget management interface with rollover calculations
  * 

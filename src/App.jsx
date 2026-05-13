@@ -10,7 +10,8 @@ import HomePage from './pages/HomePage';
 import DashboardLayout from './components/dashboard/DashboardLayout';
 import './styles/globals.css';
 
-// Auth Debugger Component (for development only)
+// Auth Debugger Component (for development only)\
+/*
 const AuthDebugger = () => {
   const { isAuthenticated, user, loading } = useAuth();
   
@@ -28,7 +29,7 @@ const AuthDebugger = () => {
       maxWidth: '250px',
       boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
     }}>
-      <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>🔐 Auth Debug</h4>
+      <h4 style={{ margin: '0 0 8px 0', color: '#333' }}> Auth Debug</h4>
       <div style={{ display: 'grid', gap: '4px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span>Loading:</span>
@@ -56,7 +57,8 @@ const AuthDebugger = () => {
     </div>
   );
 };
-
+*/
+//
 function App() {
   return (
     // Use AllProviders which includes ALL contexts
@@ -66,7 +68,7 @@ function App() {
         <MagneticCursor />
         
         {/* Show auth debugger in development mode only */}
-        {process.env.NODE_ENV === 'development' && <AuthDebugger />}
+        {/* {process.env.NODE_ENV === 'development' && <AuthDebugger />} */}
         
         <Routes>
           <Route path="/" element={<LandingPage />} />
