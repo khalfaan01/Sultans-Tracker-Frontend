@@ -10,42 +10,27 @@ const TopExpensesChart = ({ categoryBreakdown }) => {
   // Process category data and generate chart data
   const { topCategories, totalExpenses, chartData } = useMemo(() => {
     try {
-      // Validate input data
-      if (!categoryBreakdown || typeof categoryBreakdown !== 'object') {
-        console.warn('Invalid categoryBreakdown provided');
+      if (!categoryBreakdown || !Array.isArray(categoryBreakdown) || categoryBreakdown.length === 0) {
         return { topCategories: [], totalExpenses: 0, chartData: [] };
       }
 
-      const entries = Object.entries(categoryBreakdown);
-      if (entries.length === 0) {
-        return { topCategories: [], totalExpenses: 0, chartData: [] };
-      }
-
-      // Filter, sort, and limit to top 5 categories
-      const categories = entries
-        .map(([category, amount]) => ({
-          category: category || 'Uncategorized',
-          amount: Math.max(0, Number(amount) || 0) // Ensure positive number
-        }))
-        .filter(item => item.amount > 0) // Remove zero amounts
-        .sort((a, b) => b.amount - a.amount) // Descending sort
-        .slice(0, 5); // Top 5 only
+      const categories = categoryBreakdown
+        .filter(item => item.amount > 0)
+        .sort((a, b) => b.amount - a.amount)
+        .slice(0, 5);
 
       if (categories.length === 0) {
         return { topCategories: [], totalExpenses: 0, chartData: [] };
       }
 
       const total = categories.reduce((sum, item) => sum + item.amount, 0);
-      
-      // Guard against division by zero
+
       if (total <= 0) {
         return { topCategories: categories, totalExpenses: 0, chartData: [] };
       }
 
-      // Generate chart data with cumulative angles for pie segments
       const chartData = categories.map((item, index) => {
         const percentage = (item.amount / total) * 100;
-        // Calculate starting angle for this segment based on previous segments
         const angle = categories.slice(0, index).reduce((sum, prevItem) => {
           return sum + (prevItem.amount / total) * 360;
         }, 0);

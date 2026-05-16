@@ -213,7 +213,7 @@ const DebtList = () => {
             
             {activeDebts.length === 0 ? (
               <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-                <div className="text-6xl mb-4" role="img" aria-label="Money with wings">💸</div>
+                <div className="text-6xl mb-4" role="img" aria-label="Money with wings"></div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No active debts found</h3>
                 <p className="text-gray-600 mb-6">Add your first debt to get started with debt tracking</p>
                 <button 

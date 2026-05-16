@@ -54,24 +54,22 @@ const NotificationsSummary = ({ transactions, budgets, goals }) => {
     const today = new Date();
     const oneWeekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    // 1. BILL DUE NOTIFICATIONS (Simulated for demonstration)
-    const upcomingBills = [
-      { name: 'Electricity Bill', dueDate: new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000), amount: 120 },
-      { name: 'Internet Bill', dueDate: new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000), amount: 80 },
-    ].filter(bill => bill.dueDate <= oneWeekFromNow);
-
-    upcomingBills.forEach(bill => {
-      const daysUntilDue = Math.ceil((bill.dueDate - today) / (1000 * 60 * 60 * 24));
-      notificationsList.push({
-        type: 'bill_due',
-        title: 'Bill Due Soon',
-        message: `${bill.name} of $${bill.amount} due in ${daysUntilDue} day${daysUntilDue !== 1 ? 's' : ''}`,
-        severity: daysUntilDue <= 2 ? 'high' : 'medium',
-        icon: Calendar,
-        dueDate: bill.dueDate,
-        amount: bill.amount
+    // 1. BILL DUE NOTIFICATIONS
+    const upcomingBills = []; 
+    
+    upcomingBills.filter(bill => bill.dueDate <= oneWeekFromNow)
+      .forEach(bill => {
+        const daysUntilDue = Math.ceil((bill.dueDate - today) / (1000 * 60 * 60 * 24));
+        notificationsList.push({
+          type: 'bill_due',
+          title: 'Bill Due Soon',
+          message: `${bill.name} of $${bill.amount} due in ${daysUntilDue} day${daysUntilDue !== 1 ? 's' : ''}`,
+          severity: daysUntilDue <= 2 ? 'high' : 'medium',
+          icon: Calendar,
+          dueDate: bill.dueDate,
+          amount: bill.amount
+        });
       });
-    });
 
     // 2. GOAL PROGRESS NOTIFICATIONS
     gls.forEach(goal => {

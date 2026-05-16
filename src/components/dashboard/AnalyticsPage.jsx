@@ -160,23 +160,6 @@ export default function AnalyticsPage({ filters }) {
       {/* Header with timeframe controls */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Advanced Analytics</h2>
-        
-        {/* Timeframe selector for data aggregation period */}
-        <div className="flex space-x-2">
-          {['weekly', 'monthly', 'yearly'].map((frame) => (
-            <button
-              key={frame}
-              onClick={() => setTimeframe(frame)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                timeframe === frame
-                  ? 'bg-black text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {frame.charAt(0).toUpperCase() + frame.slice(1)}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Main navigation tabs */}
@@ -328,6 +311,7 @@ const OverviewTab = ({ monthlyTrends, categoryBreakdown, transactions, budgets, 
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
       <IncomeExpenseChart 
         data={monthlyTrends} 
+        transactions={transactions}
         timeframe={timeframe}
         enhancedData={enhancedAnalytics}
       />
@@ -339,13 +323,15 @@ const OverviewTab = ({ monthlyTrends, categoryBreakdown, transactions, budgets, 
       <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} className="bg-white p-6 rounded-lg shadow-sm border">
         <h3 className="text-lg font-semibold mb-4">Spending by Category</h3>
         <div className="h-64">
-          {Object.keys(categoryBreakdown).length > 0 ? (
+        {categoryBreakdown && categoryBreakdown.length > 0 ? (
             <Pie 
               data={{
-                labels: Object.keys(categoryBreakdown),
-                datasets: [{
-                  data: Object.values(categoryBreakdown),
-                  backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF'],
+                  labels: categoryBreakdown.map(item => item.category),
+                  datasets: [{
+                  data: categoryBreakdown.map(item => item.amount),
+                 backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#8B5CF6', '#EC4899', '#10B981', '#F59E0B',
+                 '#EF4444', '#06B6D4', '#84CC16', '#F97316', '#6366F1','#14B8A6', '#E11D48', '#7C3AED', '#0EA5E9', '#65A30D'
+                 ],
                 }],
               }} 
               options={{ 
@@ -459,11 +445,41 @@ const CashFlowTab = ({ transactions, enhancedAnalytics, timeframe }) => {
         <div className="h-80">
           <Line
             data={{
-              labels: periods.map(p => 
-                timeframe === 'daily' 
-                  ? p.date.split('-').slice(1).join('/') 
-                  : p.period
-              ),
+              labels: periods.map(p => {
+                  const periodKey = p.date || p.period;
+    
+                  if (timeframe === 'monthly') {
+                     // Handle "YYYY-MM" format or full date strings
+                    const parts = periodKey.split('-');
+                    if (parts.length >= 2) {
+                    const year = parts[0];
+                    const month = parseInt(parts[1]) - 1;
+                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    return monthNames[month] + ' ' + year;
+                  }
+        return periodKey;
+    }
+    
+    if (timeframe === 'weekly') {
+        // Handle week start dates
+        const parts = periodKey.split('-');
+        if (parts.length >= 3) {
+            return parts[1] + '/' + parts[2];
+        }
+        return periodKey;
+    }
+    
+    if (timeframe === 'daily') {
+        const parts = periodKey.split('-');
+        if (parts.length >= 3) {
+            return parts[1] + '/' + parts[2];
+        }
+        return periodKey;
+    }
+    
+    return periodKey;
+}),
               datasets: [
                 {
                   label: 'Income',
@@ -550,7 +566,12 @@ const IncomeTab = ({ enhancedAnalytics }) => {
               labels: streamEntries.map(([name]) => name),
               datasets: [{
                 data: streamEntries.map(([, data]) => data.percentage),
-                backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'],
+                backgroundColor: [
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                '#FF9F40', '#8B5CF6', '#EC4899', '#10B981', '#F59E0B',
+                '#EF4444', '#06B6D4', '#84CC16', '#F97316', '#6366F1',
+                '#14B8A6', '#E11D48', '#7C3AED', '#0EA5E9', '#65A30D'
+                ],
                 borderWidth: 2,
                 borderColor: '#fff'
               }]

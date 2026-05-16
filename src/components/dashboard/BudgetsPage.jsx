@@ -69,50 +69,8 @@ export default function BudgetsPage({ filters }) {
    * Applies date filtering to only count transactions within current month
    */
   const budgetsWithSpent = budgets.map(budget => {
-  // Use database spent value as primary
+  // Use database spent value - single source of truth verified by backend sync
   const spent = budget.spent || 0;
-  
-  // Calculate from transactions only for debugging and to identify issues
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  
-  const spentFromTransactions = transactions
-    .filter(tx => {
-      // Filter expense transactions
-      if (tx.type !== 'expense') return false;
-      
-      // Filter by category
-      if (tx.category !== budget.category) return false;
-      
-      // Filter by date within current month
-      const txDate = new Date(tx.date);
-      return txDate >= startOfMonth && txDate <= endOfMonth;
-    })
-    .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
-  
-  // Log detailed discrepancy for debugging
-  const difference = spent - spentFromTransactions;
-  if (Math.abs(difference) > 0.01) {
-    console.warn(`Budget spent mismatch for ${budget.category}:`, {
-      budgetId: budget.id,
-      budgetPeriod: budget.period,
-      dbSpent: spent,
-      calculatedSpent: spentFromTransactions,
-      difference: difference,
-      transactionCount: transactions.filter(tx => 
-        tx.type === 'expense' && 
-        tx.category === budget.category &&
-        new Date(tx.date) >= startOfMonth &&
-        new Date(tx.date) <= endOfMonth
-      ).length,
-      totalTransactionCount: transactions.filter(tx => 
-        tx.type === 'expense' && 
-        tx.category === budget.category
-      ).length
-    });
-  }
-  
   const percentage = budget.limit > 0 ? (spent / budget.limit) * 100 : 0;
   const remaining = Math.max(0, budget.limit - spent);
   
@@ -127,13 +85,10 @@ export default function BudgetsPage({ filters }) {
   
   return {
     ...budget,
-    spent, // Always use database value
+    spent,
     percentage,
     remaining,
-    status,
-    // Add calculated from transactions for debugging
-    _calculatedSpent: spentFromTransactions,
-    _hasDiscrepancy: Math.abs(difference) > 0.01
+    status
   };
 });
 

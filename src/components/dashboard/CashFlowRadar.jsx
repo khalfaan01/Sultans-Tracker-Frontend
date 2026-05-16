@@ -76,14 +76,24 @@ const CashFlowRadar = ({ transactions, timeframe, enhancedData }) => {
   const cashFlowData = useMemo(() => {
     // Use enhanced AI data when available (preferred source)
     if (enhancedData?.cashFlowAnalysis) {
-      return {
+    const periods = enhancedData.cashFlowAnalysis.periods || [];
+    const avgDailyIncome = periods.length > 0 
+        ? periods.reduce((sum, p) => sum + (p.income || 0), 0) / periods.length 
+        : 0;
+    const avgDailyExpense = periods.length > 0 
+        ? periods.reduce((sum, p) => sum + (p.expenses || 0), 0) / periods.length 
+        : 0;
+    
+    return {
         ...enhancedData.cashFlowAnalysis,
         riskLevel: calculateEnhancedRiskLevel(enhancedData),
         forecastInsights: enhancedData.spendingForecast?.riskFactors || [],
         balanceHistory: generateBalanceHistoryFromCashFlow(enhancedData.cashFlowAnalysis.periods),
-        forecastPeriod: enhancedData.spendingForecast?.dailyProjections?.length || 30
-      };
-    }
+        forecastPeriod: enhancedData.spendingForecast?.dailyProjections?.length || 30,
+        avgDailyIncome,
+        avgDailyExpense
+    };
+}
 
     // Fallback to transaction-based calculation when no enhanced data
     if (!transactions.length) return { 
@@ -265,7 +275,7 @@ const CashFlowRadar = ({ transactions, timeframe, enhancedData }) => {
   }
 
   // Empty state - no data available
-  if ((!transactions.length && !enhancedData) || !cashFlowData) {
+  if (!transactions.length && !enhancedData) {
     return (
       <div className="bg-white rounded-xl shadow-sm p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -515,36 +525,62 @@ const CashFlowRadar = ({ transactions, timeframe, enhancedData }) => {
         
         {/* Enhanced trend data when available */}
         {enhancedData?.cashFlowAnalysis?.trends && (
-          <div className="grid grid-cols-3 gap-4 text-sm mt-4">
-            <div>
-              <div className="text-gray-600">Income Trend</div>
-              <div className={`font-semibold ${
-                enhancedData.cashFlowAnalysis.trends.incomeGrowth >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {enhancedData.cashFlowAnalysis.trends.incomeGrowth >= 0 ? '+' : ''}
-                {enhancedData.cashFlowAnalysis.trends.incomeGrowth?.toFixed(1) || '0.0'}%
-              </div>
-            </div>
-            <div>
-              <div className="text-gray-600">Expense Trend</div>
-              <div className={`font-semibold ${
-                enhancedData.cashFlowAnalysis.trends.expenseGrowth <= 0 ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {enhancedData.cashFlowAnalysis.trends.expenseGrowth >= 0 ? '+' : ''}
-                {enhancedData.cashFlowAnalysis.trends.expenseGrowth?.toFixed(1) || '0.0'}%
-              </div>
-            </div>
-            <div>
-              <div className="text-gray-600">Volatility</div>
-              <div className={`font-semibold ${
-                enhancedData.cashFlowAnalysis.trends.volatility < 50 ? 'text-green-600' : 
-                enhancedData.cashFlowAnalysis.trends.volatility < 100 ? 'text-yellow-600' : 'text-red-600'
-              }`}>
-                {enhancedData.cashFlowAnalysis.trends.volatility?.toFixed(0) || '0'}
-              </div>
-            </div>
-          </div>
-        )}
+  <div className="grid grid-cols-3 gap-4 text-sm mt-4">
+    <div>
+      <div className="text-gray-600">Income Trend</div>
+      <div className={`font-semibold ${
+        (() => {
+          const trend = enhancedData.cashFlowAnalysis.trends;
+          const value = trend.incomeGrowth !== undefined ? trend.incomeGrowth : trend.incomeTrend;
+          if (typeof value === 'string') {
+            return value === 'decreasing' ? 'text-red-600' : value === 'increasing' ? 'text-green-600' : 'text-gray-600';
+          }
+          return value >= 0 ? 'text-green-600' : 'text-red-600';
+        })()
+      }`}>
+        {(() => {
+          const trend = enhancedData.cashFlowAnalysis.trends;
+          const value = trend.incomeGrowth !== undefined ? trend.incomeGrowth : trend.incomeTrend;
+          if (typeof value === 'string') {
+            return value.charAt(0).toUpperCase() + value.slice(1);
+          }
+          return `${value >= 0 ? '+' : ''}${value?.toFixed(1) || '0.0'}%`;
+        })()}
+      </div>
+    </div>
+    <div>
+      <div className="text-gray-600">Expense Trend</div>
+      <div className={`font-semibold ${
+        (() => {
+          const trend = enhancedData.cashFlowAnalysis.trends;
+          const value = trend.expenseGrowth !== undefined ? trend.expenseGrowth : trend.expenseTrend;
+          if (typeof value === 'string') {
+            return value === 'increasing' ? 'text-red-600' : value === 'decreasing' ? 'text-green-600' : 'text-gray-600';
+          }
+          return value <= 0 ? 'text-green-600' : 'text-red-600';
+        })()
+      }`}>
+        {(() => {
+          const trend = enhancedData.cashFlowAnalysis.trends;
+          const value = trend.expenseGrowth !== undefined ? trend.expenseGrowth : trend.expenseTrend;
+          if (typeof value === 'string') {
+            return value.charAt(0).toUpperCase() + value.slice(1);
+          }
+          return `${value >= 0 ? '+' : ''}${value?.toFixed(1) || '0.0'}%`;
+        })()}
+      </div>
+    </div>
+    <div>
+      <div className="text-gray-600">Volatility</div>
+      <div className={`font-semibold ${
+        enhancedData.cashFlowAnalysis.trends.volatility < 50 ? 'text-green-600' : 
+        enhancedData.cashFlowAnalysis.trends.volatility < 100 ? 'text-yellow-600' : 'text-red-600'
+      }`}>
+        {enhancedData.cashFlowAnalysis.trends.volatility?.toFixed(0) || '0'}
+      </div>
+    </div>
+  </div>
+)}
       </div>
     </div>
   );

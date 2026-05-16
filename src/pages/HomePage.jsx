@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTransactions, useDashboard, useBudgets, useGoals } from '../contexts';
-import IncomeExpenseChart from '../components/dashboard/IncomeExpenseChart';
+import MonthlyOverviewChart from '../components/dashboard/MonthlyOverviewChart';
 import TopExpensesChart from '../components/dashboard/TopExpensesChart';
 import CashFlowRadar from '../components/dashboard/CashFlowRadar';
 import FinanceHealthScore from '../components/dashboard/FinanceHealthScore';
@@ -116,31 +116,10 @@ const HomePage = () => {
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-bold text-gray-900">Financial Dashboard</h1>
             <div className="flex space-x-4">
-              <button
-                onClick={() => setTimeframe('monthly')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  timeframe === 'monthly'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setTimeframe('yearly')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  timeframe === 'yearly'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                Yearly
-              </button>
+              
             </div>
           </div>
-          <p className="text-gray-600 mt-2">
-            {timeframe === 'monthly' ? 'Last 30 days overview' : 'Last 12 months overview'}
-          </p>
+          
         </div>
 
         {/* Summary Cards */}
@@ -198,9 +177,9 @@ const HomePage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
           {/* Income vs Expenses Chart - Takes 2/3 width on large screens */}
           <div className="lg:col-span-1 xl:col-span-2">
-            <IncomeExpenseChart 
-              data={dashboardData.monthlyData} 
-              timeframe={timeframe}
+            <MonthlyOverviewChart 
+            data={dashboardData.monthlyData} 
+            timeframe={timeframe}
             />
           </div>
 
@@ -228,7 +207,7 @@ const HomePage = () => {
           {/* Cash Flow Radar - Takes 2/3 width on extra large screens */}
           <div className="lg:col-span-1 xl:col-span-2">
             <CashFlowRadar 
-              transactions={filteredTransactions}
+              transactions={transactions}
               timeframe={timeframe}
             />
           </div>
