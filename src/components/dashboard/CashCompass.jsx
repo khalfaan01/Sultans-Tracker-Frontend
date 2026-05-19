@@ -280,16 +280,6 @@ return (
           {moodAnalysisData.totalTracked > 0 && ` • ${moodAnalysisData.totalTracked} analyzed`}
         </p>
       </div>
-      
-      <select
-        value={timeRange}
-        onChange={(e) => setTimeRange(e.target.value)}
-        className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-      >
-        <option value="week">Last Week</option>
-        <option value="month">Last Month</option>
-        <option value="year">Last Year</option>
-      </select>
     </div>
 
     {/* Spending pattern cards */}

@@ -1,12 +1,11 @@
 // DashboardContext.jsx
-import { createContext, useContext, useMemo } from 'react';
+import { createContext, useContext, useMemo, useEffect } from 'react';
 import { useTransactions } from './TransactionsContext';
 import { useAccounts } from './AccountsContext';
 import { useBudgets } from './BudgetsContext';
 import { useGoals } from './GoalsContext';
 import { useDebt } from './DebtContext';
 import { useTransactionMood } from './TransactionMoodContext';
-import { useEffect } from 'react';
 import { useAuth } from './AuthContext';
 
 const DashboardContext = createContext();
@@ -40,6 +39,13 @@ export const DashboardProvider = ({ children }) => {
   const { analysis: moodAnalysis, loadAnalysis } = useTransactionMood();
   const { isAuthenticated } = useAuth();
 
+  // Ensure all data arrays are actually arrays to prevent "filter is not a function" errors
+  const safeTransactions = Array.isArray(transactions) ? transactions : [];
+  const safeAccounts = Array.isArray(accounts) ? accounts : [];
+  const safeBudgets = Array.isArray(budgets) ? budgets : [];
+  const safeGoals = Array.isArray(goals) ? goals : [];
+  const safeDebts = Array.isArray(debts) ? debts : [];
+
   /**
    * Loads all dashboard data when user authenticates
    */
@@ -67,16 +73,16 @@ export const DashboardProvider = ({ children }) => {
    * @type {Object}
    */
   const financialSummary = useMemo(() => {
-    const income = transactions
+    const income = safeTransactions
       .filter(tx => tx.type === 'income')
-      .reduce((sum, tx) => sum + tx.amount, 0);
+      .reduce((sum, tx) => sum + (tx.amount || 0), 0);
     
-    const expenses = transactions
+    const expenses = safeTransactions
       .filter(tx => tx.type === 'expense')
-      .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+      .reduce((sum, tx) => sum + Math.abs(tx.amount || 0), 0);
     
     const balance = income - expenses;
-    const totalAccounts = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+    const totalAccounts = safeAccounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
     const savingsRate = income > 0 ? ((income - expenses) / income) * 100 : 0;
 
     return {
@@ -85,19 +91,19 @@ export const DashboardProvider = ({ children }) => {
       expenses,
       totalAccounts,
       savingsRate,
-      transactionCount: transactions.length
+      transactionCount: safeTransactions.length
     };
-  }, [transactions, accounts]);
+  }, [safeTransactions, safeAccounts]);
 
   /**
    * Calculates spending progress against budget limits
    * @type {Array}
    */
   const budgetProgress = useMemo(() => {
-    return budgets.map(budget => {
-      const spent = transactions
+    return safeBudgets.map(budget => {
+      const spent = safeTransactions
         .filter(tx => tx.type === 'expense' && tx.category === budget.category)
-        .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+        .reduce((sum, tx) => sum + Math.abs(tx.amount || 0), 0);
       
       return {
         ...budget,
@@ -107,14 +113,14 @@ export const DashboardProvider = ({ children }) => {
         status: spent > budget.limit ? 'over' : spent > budget.limit * 0.8 ? 'warning' : 'good'
       };
     });
-  }, [budgets, transactions]);
+  }, [safeBudgets, safeTransactions]);
 
   /**
    * Calculates progress towards financial goals
    * @type {Array}
    */
   const goalProgress = useMemo(() => {
-    return goals.map(goal => {
+    return safeGoals.map(goal => {
       const progress = goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) * 100 : 0;
       const daysLeft = Math.ceil((new Date(goal.deadline) - new Date()) / (1000 * 60 * 60 * 24));
       
@@ -125,18 +131,18 @@ export const DashboardProvider = ({ children }) => {
         status: progress >= 100 ? 'completed' : daysLeft <= 30 ? 'urgent' : 'active'
       };
     });
-  }, [goals]);
+  }, [safeGoals]);
 
   /**
    * Summarizes debt information and progress
    * @type {Object}
    */
   const debtSummary = useMemo(() => {
-    const activeDebts = debts.filter(debt => debt.isActive);
-    const totalDebt = activeDebts.reduce((sum, debt) => sum + debt.balance, 0);
-    const totalMonthlyPayments = activeDebts.reduce((sum, debt) => sum + debt.minimumPayment, 0);
-    const totalPaid = debts.reduce((sum, debt) => sum + (debt.principal - debt.balance), 0);
-    const totalPrincipal = debts.reduce((sum, debt) => sum + debt.principal, 0);
+    const activeDebts = safeDebts.filter(debt => debt.isActive);
+    const totalDebt = activeDebts.reduce((sum, debt) => sum + (debt.balance || 0), 0);
+    const totalMonthlyPayments = activeDebts.reduce((sum, debt) => sum + (debt.minimumPayment || 0), 0);
+    const totalPaid = safeDebts.reduce((sum, debt) => sum + ((debt.principal || 0) - (debt.balance || 0)), 0);
+    const totalPrincipal = safeDebts.reduce((sum, debt) => sum + (debt.principal || 0), 0);
     const overallProgress = totalPrincipal > 0 ? (totalPaid / totalPrincipal) * 100 : 0;
 
     return {
@@ -146,16 +152,16 @@ export const DashboardProvider = ({ children }) => {
       overallProgress,
       debtFreeDate: calculateDebtFreeDate(activeDebts)
     };
-  }, [debts]);
+  }, [safeDebts]);
 
   /**
    * Breaks down expenses by category with percentages
    * @type {Array}
    */
   const categoryBreakdown = useMemo(() => {
-    const breakdown = transactions.reduce((acc, tx) => {
+    const breakdown = safeTransactions.reduce((acc, tx) => {
       if (tx.type === 'expense') {
-        const amount = Math.abs(tx.amount);
+        const amount = Math.abs(tx.amount || 0);
         acc[tx.category] = (acc[tx.category] || 0) + amount;
       }
       return acc;
@@ -170,22 +176,22 @@ export const DashboardProvider = ({ children }) => {
         percentage: total > 0 ? (amount / total) * 100 : 0
       }))
       .sort((a, b) => b.amount - a.amount);
-  }, [transactions]);
+  }, [safeTransactions]);
 
   /**
    * Calculates monthly income, expense, and net trends
    * @type {Array}
    */
   const monthlyTrends = useMemo(() => {
-    const trends = transactions.reduce((acc, tx) => {
+    const trends = safeTransactions.reduce((acc, tx) => {
       const month = new Date(tx.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
       if (!acc[month]) {
         acc[month] = { income: 0, expenses: 0 };
       }
       if (tx.type === 'income') {
-        acc[month].income += tx.amount;
+        acc[month].income += (tx.amount || 0);
       } else {
-        acc[month].expenses += Math.abs(tx.amount);
+        acc[month].expenses += Math.abs(tx.amount || 0);
       }
       return acc;
     }, {});
@@ -198,7 +204,7 @@ export const DashboardProvider = ({ children }) => {
       }))
       .sort((a, b) => new Date(a.month) - new Date(b.month))
       .slice(-6);
-  }, [transactions]);
+  }, [safeTransactions]);
 
   /**
    * Generates insights based on transaction mood analysis
@@ -297,12 +303,12 @@ export const DashboardProvider = ({ children }) => {
    * @returns {Object|null} Account summary or null if not found
    */
   const getAccountSummary = (accountId) => {
-    const account = accounts.find(acc => acc.id === accountId);
+    const account = safeAccounts.find(acc => acc.id === accountId);
     if (!account) return null;
     
-    const accountTransactions = transactions.filter(tx => tx.accountId === accountId);
-    const income = accountTransactions.filter(tx => tx.type === 'income').reduce((sum, tx) => sum + tx.amount, 0);
-    const expenses = accountTransactions.filter(tx => tx.type === 'expense').reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+    const accountTransactions = safeTransactions.filter(tx => tx.accountId === accountId);
+    const income = accountTransactions.filter(tx => tx.type === 'income').reduce((sum, tx) => sum + (tx.amount || 0), 0);
+    const expenses = accountTransactions.filter(tx => tx.type === 'expense').reduce((sum, tx) => sum + Math.abs(tx.amount || 0), 0);
     
     return {
       account,

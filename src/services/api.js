@@ -191,11 +191,21 @@ export const transactionsAPI = {
    */
   getAll: async () => {
     try {
-      const response = await api.get('/transactions');
-      return response.data;
+      // Use the dedicated non-paginated endpoint for dashboard
+      const response = await api.get('/transactions/all');
+      return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
-      console.error('Failed to fetch transactions', error);
-      throw error;
+      // Fallback to paginated endpoint with large limit if /all doesn't exist
+      console.warn('/transactions/all not available, using paginated fallback');
+      try {
+        const response = await api.get('/transactions?limit=50&page=1');
+        const data = response.data;
+        return Array.isArray(data.transactions) ? data.transactions : 
+               Array.isArray(data) ? data : [];
+      } catch (fallbackError) {
+        console.error('Failed to fetch transactions', fallbackError);
+        throw fallbackError;
+      }
     }
   },
 
@@ -207,7 +217,8 @@ export const transactionsAPI = {
   create: async (transactionData) => {
     try {
       const response = await api.post('/transactions', transactionData);
-      return response.data;
+      // Handle both direct transaction return and wrapped responses
+      return response.data.transaction || response.data;
     } catch (error) {
       console.error('Failed to create transaction', error);
       throw error;

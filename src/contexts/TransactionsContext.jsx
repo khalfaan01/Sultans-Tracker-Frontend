@@ -29,7 +29,7 @@ export const useTransactions = () => {
 export const TransactionsProvider = ({ children }) => {
   const { requireAuthSilent } = useAuthCheck();
   const { executeAsync, loading, error, clearError } = useDataLoader({
-    transactions: []
+    transactions: [] // This initial state won't be used since we manage transactions separately
   });
   const { socket, isConnected } = useSocket();
 
@@ -52,15 +52,24 @@ export const TransactionsProvider = ({ children }) => {
    * @returns {Promise<Array>} Array of transaction objects
    */
   const loadTransactions = async () => {
-    if (!requireAuthSilent()) return;
+    if (!requireAuthSilent()) return [];
     
-    const result = await executeAsync(async () => {
-      const data = await transactionsAPI.getAll();
-      setTransactions(data);
-      return data;
-    });
-    
-    return result;
+    try {
+      const result = await executeAsync(async () => {
+        const data = await transactionsAPI.getAll();
+        // Ensure data is an array before setting state
+        const transactionsArray = Array.isArray(data) ? data : [];
+        setTransactions(transactionsArray);
+        return transactionsArray;
+      });
+      
+      // Return the actual data array from the result, not the result object
+      return result.success ? result.data : [];
+    } catch (error) {
+      console.error('Failed to load transactions:', error);
+      setTransactions([]);
+      return [];
+    }
   };
 
   /**
