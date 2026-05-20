@@ -1,6 +1,6 @@
-# Sultan’s Tracker — Frontend
+# Finance Tracker — Frontend
 
-> A modern fintech dashboard built with React that combines financial tracking, behavioral analytics, AI‑driven insights, and real‑time security monitoring. Designed to reflect how real‑world financial applications operate at scale.
+> A modern finance tech dashboard built with React that combines financial tracking, behavioral analytics, AI‑driven insights, and real‑time security monitoring. Designed to reflect how real‑world financial applications operate at scale.
 
 ---
 
@@ -15,15 +15,6 @@ Sultan’s Tracker focuses on **real frontend complexity**:
 * High‑quality UI/UX with performance in mind
 
 This frontend is built to integrate seamlessly with a security‑focused fintech backend.
-
----
-
-## Status & Stack
-
-![React](https://img.shields.io/badge/React-18.3.1-61DAFB)
-![Vite](https://img.shields.io/badge/Vite-5.4.20-646CFF)
-![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4.18-06B6D4)
-![Status](https://img.shields.io/badge/Status-Active-success)
 
 ---
 
@@ -321,12 +312,6 @@ npm run lint     # Run ESLint
 ## License
 
 MIT License — see the `LICENSE` file for details.
-
----
-
-## Support
-
-For issues and feature requests, please use the issue tracker.
 
 ---
 
