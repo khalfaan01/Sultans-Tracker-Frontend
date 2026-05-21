@@ -14,16 +14,7 @@ This Finance Tracker focuses on **real frontend complexity**:
 * Data‑driven financial insights
 * High‑quality UI/UX with performance in mind
 
-This frontend is built to integrate seamlessly with a security‑focused fintech backend.
-
----
-
-## Status & Stack
-
-![React](https://img.shields.io/badge/React-18.3.1-61DAFB)
-![Vite](https://img.shields.io/badge/Vite-5.4.20-646CFF)
-![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4.18-06B6D4)
-![Status](https://img.shields.io/badge/Status-Active-success)
+This frontend is built to integrate seamlessly with a security‑focused finance tech backend.
 
 ---
 
@@ -278,7 +269,7 @@ FINANCE-TRACKER-FRONTEND/
 ### High-Level Overview
 ```text
 ┌─────────────────────────────────────────────────────────────────────┐
-│ FINANCE-TRACKER-FRONTEND (Port 5173)                                │
+│ Finance-Tracker-Frontend (Port 5173)                                │
 │                                                                     │
 │ ┌───────────────────────────────────────────────────────────────┐   │
 │ │ CONTEXT PROVIDER HIERARCHY                                    │   │
@@ -428,6 +419,10 @@ API Call Returns 403 "Token Expired"
   │
   └─────────────────────────────────────────────────────────────────
 ```
+
+### Dependency Flow Visualization
+
+
 ```text
 FOUNDATION ──────────────────────────────────────────────────────────────
      │
@@ -512,6 +507,8 @@ DashboardProvider (consumes ALL data sources for comprehensive analytics)
 * Analytics: `/api/analytics/*`
 * Security: `/api/security/*`
 * Transaction Moods: `/api/transaction-mood/*`
+
+---
 
 ### Error Handling
 
