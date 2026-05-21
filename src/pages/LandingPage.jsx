@@ -140,22 +140,30 @@ export default function LandingPage() {
       <HamburgerNav isLoggedIn={isAuthenticated} />
       
       {/* Hero Section with fade-out on scroll */}
-      <section className="h-screen flex items-center justify-center relative">
-        <motion.h1 
-          className="text-6xl md:text-8xl font-bold text-white text-center tracking-tight"
-          style={{ opacity }}
-        >
-          Sultans-Tracker
-        </motion.h1>
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="absolute bottom-10 left-1/2 transform -translate-x-1/2 text-white text-lg"
-        >
-          Scroll to explore ↓
-        </motion.div>
-      </section>
+<section className="h-screen flex items-center justify-center relative">
+  <div className="text-center">
+    <motion.h1 
+      className="text-6xl md:text-8xl font-bold text-white tracking-tight"
+      style={{ opacity }}
+    >
+      Evercrest
+    </motion.h1>
+    <motion.p
+      className="text-xl md:text-2xl text-white/80 mt-4 font-light"
+      style={{ opacity }}
+    >
+      The Financial Tracker for new heights
+    </motion.p>
+  </div>
+  <motion.div
+    initial={{ opacity: 0, y: 50 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.5 }}
+    className="absolute bottom-10 left-1/2 transform -translate-x-1/2 text-white text-lg"
+  >
+    Scroll to explore ↓
+  </motion.div>
+</section>
 
       {/* Parallax Content Section */}
       <motion.section 
@@ -232,7 +240,7 @@ export default function LandingPage() {
             transition={{ duration: 0.8, delay: 0.4 }}
           >
             <h2 className="text-4xl font-bold text-center mb-4">
-              Why Choose Sultans-Tracker?
+              Why Choose Evercrest?
             </h2>
             <p className="text-xl text-gray-600 text-center mb-12 max-w-3xl mx-auto">
               Experience the future of personal finance management
