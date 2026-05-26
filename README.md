@@ -52,15 +52,15 @@ This frontend is built to integrate seamlessly with a security‑focused finance
 <table>
   <tr>
     <td align="center">
-      <img src="./assets/active-debts-overview.PNG" width="30"/><br/>
+      <img src="./assets/active-debts-overview.PNG" width="40"/><br/>
       <sub><b>Active Debts Overview</b></sub>
     </td>
     <td align="center">
-      <img src="./assets/debt-analytics.gif" width="30"/><br/>
+      <img src="./assets/debt-analytics.gif" width="40"/><br/>
       <sub><b>Debt Analytics</b></sub>
     </td>
     <td align="center">
-      <img src="./assets/add-new-debt.gif" width="30"/><br/>
+      <img src="./assets/add-new-debt.gif" width="40"/><br/>
       <sub><b>Add a New Debt</b></sub>
     </td>
   </tr>
