@@ -1,7 +1,7 @@
 // src/components/dashboard/TransactionsPage.jsx
 import { motion } from 'framer-motion';
 import { 
-  Plus, Search, Trash2, AlertTriangle, Calendar, BarChart3  
+  Plus, Search, Trash2, AlertTriangle, BarChart3  
 } from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
 import { useTransactions, useBudgets } from '../../contexts';
@@ -9,7 +9,6 @@ import { checkTransactionAgainstBudget, showBudgetWarning, showBudgetError } fro
 
 // Components
 import TransactionMoodTracker from './TransactionMoodTracker';
-import CalendarView from './CalendarView';
 import MultiFilter from '../ui/MultiFilter';
 
 /**
@@ -18,7 +17,6 @@ import MultiFilter from '../ui/MultiFilter';
  * Features:
  * - Transaction list with filtering
  * - Mood tracking integration
- * - Calendar view toggle
  * - Real-time updates
  */
 export default function TransactionsPage({ filters = {} }) {
@@ -42,7 +40,6 @@ export default function TransactionsPage({ filters = {} }) {
   
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTransaction, setNewTransaction] = useState(defaultTransaction);
-  const [activeView, setActiveView] = useState('list');
   const [localFilters, setLocalFilters] = useState({
     dateRange: null,
     amountRange: null,
@@ -233,11 +230,9 @@ export default function TransactionsPage({ filters = {} }) {
     }
   }, [deleteTransaction]);
 
-  // Filter transactions based on filters and search query
+  // Filter transactions based on localFilters and search query
   const filteredTransactions = useCallback(() => {
     try {
-      const filters = safeFilters();
-      
       return transactions.filter(tx => {
         if (!tx || typeof tx !== 'object') return false;
 
@@ -252,41 +247,41 @@ export default function TransactionsPage({ filters = {} }) {
           }
         }
 
-        // Category filter
-        if (filters.categories.length > 0 && !filters.categories.includes(tx.category)) {
+        // LocalFilters - Category filter
+        if (localFilters.categories.length > 0 && !localFilters.categories.includes(tx.category)) {
           return false;
         }
         
-        // Type filter
-        if (filters.type !== 'all' && tx.type !== filters.type) {
+        // LocalFilters - Type filter
+        if (localFilters.type !== 'all' && tx.type !== localFilters.type) {
           return false;
         }
         
-        // Date range filter
-        if (filters.dateRange) {
+        // LocalFilters - Date range filter
+        if (localFilters.dateRange) {
           const txDate = new Date(tx.date);
           
-          if (filters.dateRange.start) {
-            const startDate = new Date(filters.dateRange.start);
+          if (localFilters.dateRange.start) {
+            const startDate = new Date(localFilters.dateRange.start);
             if (txDate < startDate) return false;
           }
           
-          if (filters.dateRange.end) {
-            const endDate = new Date(filters.dateRange.end);
+          if (localFilters.dateRange.end) {
+            const endDate = new Date(localFilters.dateRange.end);
             endDate.setHours(23, 59, 59, 999); // End of day
             if (txDate > endDate) return false;
           }
         }
         
-        // Amount range filter
-        if (filters.amountRange) {
+        // LocalFilters - Amount range filter
+        if (localFilters.amountRange) {
           const txAmount = Math.abs(tx.amount);
           
-          if (filters.amountRange.min && txAmount < parseFloat(filters.amountRange.min)) {
+          if (localFilters.amountRange.min && txAmount < parseFloat(localFilters.amountRange.min)) {
             return false;
           }
           
-          if (filters.amountRange.max && txAmount > parseFloat(filters.amountRange.max)) {
+          if (localFilters.amountRange.max && txAmount > parseFloat(localFilters.amountRange.max)) {
             return false;
           }
         }
@@ -297,7 +292,7 @@ export default function TransactionsPage({ filters = {} }) {
       console.error('Error filtering transactions:', err);
       return []; // Return empty array on error
     }
-  }, [transactions, safeFilters, searchQuery]);
+  }, [transactions, localFilters, searchQuery]);
 
   // Reset form when closed
   const resetForm = useCallback(() => {
@@ -346,38 +341,10 @@ export default function TransactionsPage({ filters = {} }) {
         </div>
       )}
 
-      {/* Header with View Toggle */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h2 className="text-2xl font-bold">Transactions</h2>
         <div className="flex items-center space-x-3">
-          {/* View Toggle Buttons */}
-          <div className="flex bg-gray-100 rounded-lg p-1">
-            <button
-              onClick={() => setActiveView('list')}
-              disabled={loading}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition-colors flex items-center disabled:opacity-50 ${
-                activeView === 'list' 
-                  ? 'bg-white text-black shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              <BarChart3 size={16} className="inline mr-1" />
-              List
-            </button>
-            <button
-              onClick={() => setActiveView('calendar')}
-              disabled={loading}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition-colors flex items-center disabled:opacity-50 ${
-                activeView === 'calendar' 
-                  ? 'bg-white text-black shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              <Calendar size={16} className="inline mr-1" />
-              Calendar
-            </button>
-          </div>
-          
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -391,13 +358,13 @@ export default function TransactionsPage({ filters = {} }) {
         </div>
       </div>
 
-
       {/* MultiFilter Component */}
       <MultiFilter 
         filters={localFilters}
         onFiltersChange={setLocalFilters}
         activeTab="Transactions"
       />
+
       {/* Add Transaction Form */}
       {showAddForm && (
     <motion.div
@@ -558,95 +525,90 @@ export default function TransactionsPage({ filters = {} }) {
     </motion.div>
   )}
 
-      {/* Conditional Rendering based on Active View */}
-      {activeView === 'calendar' ? (
-        <CalendarView />
-      ) : (
-        /* Transactions List View */
-        <div className="bg-white rounded-lg shadow-sm border">
-          <div className="p-4 border-b">
-            <div className="flex items-center space-x-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search transactions by description, category, or amount..."
-                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                  disabled={loading}
-                />
-              </div>
+      {/* Transactions List View */}
+      <div className="bg-white rounded-lg shadow-sm border">
+        <div className="p-4 border-b">
+          <div className="flex items-center space-x-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search transactions by description, category, or amount..."
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                disabled={loading}
+              />
             </div>
           </div>
+        </div>
 
-          <div className="divide-y">
-            {filteredTransactions().length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                {searchQuery ? 'No transactions match your search.' : 'No transactions found. Add your first transaction to get started.'}
-              </div>
-            ) : (
-              filteredTransactions().map((transaction, index) => (
-                <motion.div
-                  key={transaction.id || `transaction-${index}`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="p-4 flex justify-between items-start hover:bg-gray-50 group"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center space-x-3">
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <h3 className="font-medium">{transaction.description || 'No description'}</h3>
-                            {transaction.flagged && (
-                              <AlertTriangle size={16} className="text-red-500" title="Flagged for review" />
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-500">
-                            {transaction.category || 'Uncategorized'} • {transaction.date ? new Date(transaction.date).toLocaleDateString() : 'No date'}
-                            {transaction.fraudReason && (
-                              <span className="text-red-500 ml-2">⚠️ Suspicious</span>
-                            )}
-                          </p>
+        <div className="divide-y">
+          {filteredTransactions().length === 0 ? (
+            <div className="p-8 text-center text-gray-500">
+              {searchQuery ? 'No transactions match your search.' : 'No transactions found. Add your first transaction to get started.'}
+            </div>
+          ) : (
+            filteredTransactions().map((transaction, index) => (
+              <motion.div
+                key={transaction.id || `transaction-${index}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="p-4 flex justify-between items-start hover:bg-gray-50 group"
+              >
+                <div className="flex-1">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center space-x-3">
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <h3 className="font-medium">{transaction.description || 'No description'}</h3>
+                          {transaction.flagged && (
+                            <AlertTriangle size={16} className="text-red-500" title="Flagged for review" />
+                          )}
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-3">
-                        <div className={`text-lg font-semibold ${
-                          transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {transaction.amount >= 0 ? '+' : ''}${Math.abs(transaction.amount || 0).toFixed(2)}
-                        </div>
-                        
-                        <button
-                          onClick={() => handleDelete(transaction.id)}
-                          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 rounded transition-all disabled:opacity-50"
-                          title="Delete transaction"
-                          disabled={loading}
-                        >
-                          <Trash2 size={16} className="text-red-500" />
-                        </button>
+                        <p className="text-sm text-gray-500">
+                          {transaction.category || 'Uncategorized'} • {transaction.date ? new Date(transaction.date).toLocaleDateString() : 'No date'}
+                          {transaction.fraudReason && (
+                            <span className="text-red-500 ml-2">⚠️ Suspicious</span>
+                          )}
+                        </p>
                       </div>
                     </div>
                     
-                    {/* Mood Tracker */}
-                    <div className="mt-2">
-                      <TransactionMoodTracker 
-                        transaction={transaction}
-                        onMoodAdded={(mood) => {
-                          console.log('Mood added:', mood);
-                        }}
-                      />
+                    <div className="flex items-center space-x-3">
+                      <div className={`text-lg font-semibold ${
+                        transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {transaction.amount >= 0 ? '+' : ''}${Math.abs(transaction.amount || 0).toFixed(2)}
+                      </div>
+                      
+                      <button
+                        onClick={() => handleDelete(transaction.id)}
+                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 rounded transition-all disabled:opacity-50"
+                        title="Delete transaction"
+                        disabled={loading}
+                      >
+                        <Trash2 size={16} className="text-red-500" />
+                      </button>
                     </div>
                   </div>
-                </motion.div>
-              ))
-            )}
-          </div>
+                  
+                  {/* Mood Tracker */}
+                  <div className="mt-2">
+                    <TransactionMoodTracker 
+                      transaction={transaction}
+                      onMoodAdded={(mood) => {
+                        console.log('Mood added:', mood);
+                      }}
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            ))
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

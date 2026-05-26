@@ -22,36 +22,53 @@ This frontend is built to integrate seamlessly with a security‑focused finance
 
 > Screenshots reflect real application states — not mockups.
 
+### Landing Page
+* Marketing, features, benefits, "Sign Up" and "Get Started"
+
+![Landing Page](./assets/landing-page.gif)
+
 ### Dashboard Overview
 
-* Financial health summary
-* Income vs expense trends
-* Key alerts and insights
+![Dashboard Overview](./assets/dashboard.gif)
 
-![Dashboard Overview](./screenshots/dashboard.png)
+### Advanced Analytics
 
-### Cash Compass — Behavioral Finance
+![Advanced Analytics](./assets/advanced-analytics.gif)
 
-* Emotional vs impulsive spending detection
-* Mood–spending correlation
-* Personalized AI recommendations
+### Financial Goals
 
-![Cash Compass](./screenshots/cash-compass.png)
+![Financial Goals](./assets/financial-goals.gif)
 
-### Finance Health Score
+### Smart Budgets
 
-* Multi‑factor scoring (budgeting, savings, debt, stability)
-* Visual grading system (A–F)
-* Actionable improvement insights
+![Smart Budgets](./assets/smart-budgets.gif)
 
-![Finance Health Score](./screenshots/finance-health.png)
+### Transactions Overview
 
-### Real‑Time Monitoring & Alerts
+![Transactions Overview](./assets/transactions-overview.gif)
 
-* Live transaction updates
-* Fraud & anomaly detection alerts
+### Debt Management
 
-![Real‑Time Alerts](./screenshots/alerts.png)
+<table>
+  <tr>
+    <td align="center">
+      <img src="./assets/active-debts-overview.PNG" width="30"/><br/>
+      <sub><b>Active Debts Overview</b></sub>
+    </td>
+    <td align="center">
+      <img src="./assets/debt-analytics.gif" width="30"/><br/>
+      <sub><b>Debt Analytics</b></sub>
+    </td>
+    <td align="center">
+      <img src="./assets/add-new-debt.gif" width="30"/><br/>
+      <sub><b>Add a New Debt</b></sub>
+    </td>
+  </tr>
+</table>
+
+### Security Analytics
+
+![Security Analytics](./assets/security-analytics.gif)
 
 ---
 
@@ -117,6 +134,31 @@ This frontend is built to integrate seamlessly with a security‑focused finance
 | **MultiFilter** | Advanced filtering component |
 | **AlertNotification** | Toast notification system |
 | **DirectionalList** | Animated list with directional reveal |
+
+---
+
+## Engineering Decisions & Challenges
+
+| Decision                        | Rationale                                                        | Challenge                                                              |
+| ------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Context API over Redux          | Simpler for this scale, less boilerplate                         | 9 nested providers create deep component trees and re-render cascades  |
+| Provider nesting order          | Auth must be outermost, Dashboard innermost for data aggregation | Tight coupling — changing one context can break consumer dependencies  |
+| Axios interceptor token refresh | Transparent token rotation without user interruption             | Request queuing logic complex; race conditions during multiple 403s    |
+| Chart.js over D3                | Faster implementation for standard financial charts              | Limited customization for advanced visualizations like heatmaps        |
+| Tailwind CSS utility-first      | Rapid UI development with consistent design system               | Bundle size if not purged properly; relies on PostCSS pipeline         |
+| Magnetic cursor effect          | Unique UX differentiator                                         | Performance overhead on low-end devices; CSS transforms needed         |
+| Client-side fallback on 404     | Graceful degradation when backend endpoints missing              | Masks actual bugs — developers might not notice broken endpoints       |
+| Vite over CRA                   | Significantly faster dev server and builds                       | Ecosystem maturity — some plugins less tested than webpack equivalents |
+
+---
+
+## Future Improvements
+
+- End-to-end testing — Add Playwright/Cypress tests for critical user flows
+- Progressive Web App — Offline support
+- WebSocket reconnection — Robust reconnection with exponential backoff and state sync
+- Theme system — Dark/light mode with CSS custom properties
+- Mobile-responsive pass — Optimize for tablet and phone form factors
 
 ---
 
